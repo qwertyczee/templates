@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { PostHogProvider } from "@/components/providers/posthog-provider";
 import { SupabaseProvider } from "@/components/providers/supabase-provider";
 import "./globals.css";
 
@@ -30,7 +31,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-slate-950 dark:bg-slate-950 dark:text-slate-50`}
       >
-        <SupabaseProvider>{children}</SupabaseProvider>
+        <PostHogProvider>
+          <SupabaseProvider>{children}</SupabaseProvider>
+        </PostHogProvider>
       </body>
     </html>
   );

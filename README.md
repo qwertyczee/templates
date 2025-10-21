@@ -8,6 +8,7 @@ This template ships with a ready-to-use Supabase integration covering authentica
 - 👤 Drop-in email/password auth form using Supabase Auth
 - 🗄️ Server helpers for querying and mutating Supabase tables
 - 🖼️ Client utilities and UI for uploading images to Supabase Storage
+- 📊 PostHog analytics wiring with automatic page view tracking
 - ⚙️ Environment validation so missing keys are surfaced instantly
 
 ## Getting started
@@ -29,6 +30,8 @@ This template ships with a ready-to-use Supabase integration covering authentica
    - `NEXT_PUBLIC_SUPABASE_URL`: the project URL from Supabase Dashboard → Project Settings → API
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: the anonymous public key from the same screen
    - `SUPABASE_SERVICE_ROLE_KEY` (optional): used for admin-level server tasks. Keep this key private.
+   - `NEXT_PUBLIC_POSTHOG_KEY` (optional): the client key from Project Settings → API Keys in PostHog. Leave blank to disable analytics locally.
+   - `NEXT_PUBLIC_POSTHOG_HOST` (optional): override the PostHog host if you're self-hosting (defaults to `https://app.posthog.com`).
 
 3. In Supabase Dashboard:
 
@@ -70,7 +73,7 @@ This template ships with a ready-to-use Supabase integration covering authentica
 ```
 src/
 ├─ app/
-│  ├─ layout.tsx                # Supabase provider is registered here
+│  ├─ layout.tsx                # Supabase and PostHog providers are registered here
 │  └─ page.tsx                  # Demo page showing auth status & storage uploader
 ├─ components/
 │  ├─ providers/

@@ -1,27 +1,23 @@
-const { verifyAccessToken } = require("../utils/jwt");
+const jwt = require('jsonwebtoken');
 
-function authRequired(req, res, next) {
-    let token = null;
+const jwtSecret = process.env.JWT_SECRET || 'default_secret_change_me';
 
-    // If not found in header, try to get it from cookies
-    if (!token && req.cookies?.at) {
-        token = req.cookies.at;
-    }
+const authRequired = (req, res, next) => {
+  const token = req.cookies.token;
 
-    if (!token) {
-        return res.status(401).json({ error: { message: "Unauthorized" } });
-    }
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
-    try {
-        const payload = verifyAccessToken(token);
-        req.user = {
-            id: payload.sub,
-            email: payload.email
-        };
-        return next();
-    } catch (_e) {
-        return res.status(401).json({ error: { message: "Invalid token" } });
-    }
-}
+  try {
+    const decoded = jwt.verify(token, jwtSecret);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+};
 
-module.exports = { authRequired };
+module.exports = {
+  authRequired,
+};

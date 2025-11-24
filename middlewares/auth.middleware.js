@@ -1,16 +1,15 @@
 const jwt = require('jsonwebtoken');
-
-const jwtSecret = process.env.JWT_SECRET || 'default_secret_change_me';
+const { env } = require('../config/env');
 
 const authRequired = (req, res, next) => {
-  const token = req.cookies.token;
+  const token = req.cookies.accessToken;
 
   if (!token) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {
-    const decoded = jwt.verify(token, jwtSecret);
+    const decoded = jwt.verify(token, env.jwtSecret);
     req.user = decoded;
     next();
   } catch (error) {

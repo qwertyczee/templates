@@ -10,9 +10,8 @@ const env = {
 
     googleClientId: process.env.GOOGLE_CLIENT_ID,
     googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    googleRedirectUri: process.env.GOOGLE_REDIRECT_URI ||
-      "http://localhost:8080/auth/google/callback",
-    googleRedirectFrontendUrl: process.env.GOOGLE_REDIRECT_FRONTEND_URL || "http://localhost:3000",
+    googleRedirectUri: process.env.GOOGLE_REDIRECT_URI,
+    googleRedirectFrontendUrl: process.env.GOOGLE_REDIRECT_FRONTEND_URL,
 
     frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
     corsOrigins: (process.env.CORS_ORIGINS || "").split(",").filter(Boolean),
@@ -20,6 +19,12 @@ const env = {
     posthogApiKey: process.env.POSTHOG_API_KEY,
     posthogHost: process.env.POSTHOG_HOST || "https://us.i.posthog.com",
     posthogForceEnable: process.env.POSTHOG_FORCE_ENABLE || false,
+
+    jwtSecret: process.env.JWT_SECRET || "default_secret_change_me",
+
+    githubClientId: process.env.GITHUB_CLIENT_ID,
+    githubClientSecret: process.env.GITHUB_CLIENT_SECRET,
+    githubRedirectUri: process.env.GITHUB_REDIRECT_URI,
 
     resendApiKey: process.env.RESEND_API_KEY,
     emailFromName: process.env.EMAIL_FROM_NAME || "Your App Name",

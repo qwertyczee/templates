@@ -9,6 +9,9 @@ dist
 
 # Env
 .env
+.env.local
 
 .vercel
 drizzle.config.json
+
+logs/

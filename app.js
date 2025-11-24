@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
-const path = require("path");
-require("dotenv").config({ path: path.resolve(process.cwd(), ".env") });
+require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");

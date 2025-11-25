@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Mail, Github } from 'lucide-react';
+import { Mail } from 'lucide-react';
 
 const Login: React.FC = () => {
-  const { sendMagicLink, loginWithGoogle, loginWithGithub } = useAuth();
+  const { sendMagicLink, loginWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
@@ -112,10 +112,6 @@ const Login: React.FC = () => {
                 />
               </svg>
               Continue with Google
-            </Button>
-            <Button variant="outline" className="w-full" onClick={loginWithGithub}>
-              <Github className="w-4 h-4 mr-2" />
-              Continue with GitHub
             </Button>
           </div>
         </CardContent>

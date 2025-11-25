@@ -13,7 +13,6 @@ interface AuthContextType {
   sendMagicLink: (email: string) => Promise<void>;
   verifyMagicLink: (token: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
-  loginWithGithub: () => Promise<void>;
   logout: () => void;
 }
 
@@ -99,12 +98,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (data.url) window.location.href = data.url;
   };
 
-  const loginWithGithub = async () => {
-    const response = await fetch(`${API_URL}/auth/github`);
-    const data = await response.json();
-    if (data.url) window.location.href = data.url;
-  };
-
   const logout = async () => {
     try {
       await fetch(`${API_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
@@ -116,7 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, sendMagicLink, verifyMagicLink, loginWithGoogle, loginWithGithub, logout }}>
+    <AuthContext.Provider value={{ user, loading, sendMagicLink, verifyMagicLink, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

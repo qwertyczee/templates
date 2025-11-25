@@ -11,38 +11,27 @@ const { env } = require("../config/env")
  * @returns {Promise} - Resolves when email is sent
  */
 const sendEmail = async (options) => {
-    try {
-        // Initialize Resend with API key
-        const resend = new Resend(env.resendApiKey);
-        
-        if (!env.resendApiKey) {
-            console.error('RESEND_API_KEY environment variable is not set');
-            return null;
-        }
-        
-        // Send the email
-        const { data, error } = await resend.emails.send({
-            from: `${env.emailFromName} <${env.emailFromAddress}>`,
-            to: options.to,
-            subject: options.subject,
-            text: options.text,
-            html: options.html,
-            replyTo: env.supportEmail,
-        });
-        
-        if (error) {
-            console.error('Error sending email with Resend:', error);
-            return null;
-        }
-        return data;
-    } catch (error) {
-        console.error('Error sending email:', {
-            to: options.to,
-            subject: options.subject,
-            error: error.message
-        });
-        return null;
+    if (!env.resendApiKey) {
+        throw new Error('Email service not configured');
     }
+    
+    const resend = new Resend(env.resendApiKey);
+    
+    const { data, error } = await resend.emails.send({
+        from: `${env.emailFromName} <${env.emailFromAddress}>`,
+        to: options.to,
+        subject: options.subject,
+        text: options.text,
+        html: options.html,
+        replyTo: env.supportEmail,
+    });
+    
+    if (error) {
+        console.error('Error sending email with Resend:', error);
+        throw new Error('Failed to send email');
+    }
+    
+    return data;
 };
 
 module.exports = {

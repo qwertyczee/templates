@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
+const API_URL = 'http://localhost:8080';
+
 interface User {
   id: string;
   email: string;
@@ -8,8 +10,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
+  sendMagicLink: (email: string) => Promise<void>;
+  verifyMagicLink: (token: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   loginWithGithub: () => Promise<void>;
   logout: () => void;
@@ -24,22 +26,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        let response = await fetch('http://localhost:8080/auth/me', {
-            credentials: 'include',
+        let response = await fetch(`${API_URL}/auth/me`, {
+          credentials: 'include',
         });
 
         if (response.status === 401) {
-            // Try refreshing
-            const refreshResponse = await fetch('http://localhost:8080/auth/refresh', {
-                method: 'POST',
-                credentials: 'include',
+          // Try refreshing
+          const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+          if (refreshResponse.ok) {
+            // Retry me
+            response = await fetch(`${API_URL}/auth/me`, {
+              credentials: 'include',
             });
-            if (refreshResponse.ok) {
-                // Retry me
-                response = await fetch('http://localhost:8080/auth/me', {
-                    credentials: 'include',
-                });
-            }
+          }
         }
 
         if (response.ok) {
@@ -59,35 +61,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchUser();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const response = await fetch('http://localhost:8080/auth/login', {
+  const sendMagicLink = async (email: string) => {
+    const response = await fetch(`${API_URL}/auth/magic-link`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email }),
       credentials: 'include',
     });
-    
+
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Login failed');
+      throw new Error(error.error || 'Failed to send magic link');
     }
-
-    const data = await response.json();
-    setUser(data.user);
-    window.location.href = '/dashboard';
   };
 
-  const register = async (email: string, password: string) => {
-    const response = await fetch('http://localhost:8080/auth/register', {
+  const verifyMagicLink = async (token: string) => {
+    const response = await fetch(`${API_URL}/auth/magic-link/verify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ token }),
       credentials: 'include',
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Registration failed');
+      throw new Error(error.error || 'Failed to verify magic link');
     }
 
     const data = await response.json();
@@ -96,20 +94,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginWithGoogle = async () => {
-    const response = await fetch('http://localhost:8080/auth/google');
+    const response = await fetch(`${API_URL}/auth/google`);
     const data = await response.json();
     if (data.url) window.location.href = data.url;
   };
 
   const loginWithGithub = async () => {
-    const response = await fetch('http://localhost:8080/auth/github');
+    const response = await fetch(`${API_URL}/auth/github`);
     const data = await response.json();
     if (data.url) window.location.href = data.url;
   };
 
   const logout = async () => {
     try {
-      await fetch('http://localhost:8080/auth/logout', { method: 'POST', credentials: 'include' });
+      await fetch(`${API_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
       setUser(null);
       window.location.href = '/login';
     } catch (error) {
@@ -118,7 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, loginWithGithub, logout }}>
+    <AuthContext.Provider value={{ user, loading, sendMagicLink, verifyMagicLink, loginWithGoogle, loginWithGithub, logout }}>
       {children}
     </AuthContext.Provider>
   );

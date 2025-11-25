@@ -9,7 +9,6 @@ const Dashboard: React.FC = () => {
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
       <p className="mb-4">Welcome, {user?.email}!</p>
-      <p className="mb-4">WorkOS ID: {user?.workosId}</p>
       <Button onClick={logout}>Logout</Button>
     </div>
   );

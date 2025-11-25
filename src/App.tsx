@@ -11,7 +11,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
 import Login from "./pages/Login";
-import Register from "./pages/Register";
+import MagicLinkVerify from "./pages/MagicLinkVerify";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -25,7 +25,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/auth/verify" element={<MagicLinkVerify />} />
             
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />

@@ -1,28 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { Mail } from 'lucide-react';
+import { Mail, AlertCircle } from 'lucide-react';
+
+const ERROR_MESSAGES: Record<string, string> = {
+  google_auth_failed: 'Google authentication failed. Please try again.',
+  invalid_token: 'Invalid or expired login link.',
+  auth_failed: 'Authentication failed. Please try again.',
+};
 
 const Login: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { sendMagicLink, loginWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Handle URL error params
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      const message = ERROR_MESSAGES[errorParam] || 'An error occurred. Please try again.';
+      setError(message);
+      toast.error(message);
+      // Clear the error from URL
+      searchParams.delete('error');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
     try {
       await sendMagicLink(email);
       setEmailSent(true);
       toast.success('Magic link sent! Check your email.');
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to send magic link';
+      setError(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true);
+    setError(null);
+    try {
+      await loginWithGoogle();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to start Google login';
+      setError(message);
+      toast.error(message);
+      setIsGoogleLoading(false);
     }
   };
 
@@ -64,6 +104,12 @@ const Login: React.FC = () => {
           <CardDescription>Sign in to your account to continue.</CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Input
@@ -92,7 +138,12 @@ const Login: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            <Button variant="outline" className="w-full" onClick={loginWithGoogle}>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleGoogleLogin}
+              disabled={isGoogleLoading}
+            >
               <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
@@ -111,8 +162,8 @@ const Login: React.FC = () => {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Continue with Google
-            </Button>
+                {isGoogleLoading ? 'Redirecting...' : 'Continue with Google'}
+              </Button>
           </div>
         </CardContent>
       </Card>

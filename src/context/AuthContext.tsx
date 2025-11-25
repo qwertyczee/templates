@@ -94,8 +94,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithGoogle = async () => {
     const response = await fetch(`${API_URL}/auth/google`);
+    if (!response.ok) {
+      throw new Error('Failed to connect to Google');
+    }
     const data = await response.json();
-    if (data.url) window.location.href = data.url;
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error('Invalid response from server');
+    }
   };
 
   const logout = async () => {

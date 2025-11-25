@@ -8,7 +8,7 @@ const env = {
     jwtSecret: process.env.JWT_SECRET || "default_secret_change_me",
 
     // Magic Link
-    magicLinkExpiryMinutes: Number(process.env.MAGIC_LINK_EXPIRY_MINUTES || 60),
+    magicLinkExpiryMinutes: Number(process.env.MAGIC_LINK_EXPIRY_MINUTES || 15),
 
     // Google OAuth
     googleClientId: process.env.GOOGLE_CLIENT_ID,

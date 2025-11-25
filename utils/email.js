@@ -34,12 +34,6 @@ const sendEmail = async (options) => {
             console.error('Error sending email with Resend:', error);
             return null;
         }
-        
-        console.log('Email sent successfully with Resend:', {
-            id: data.id,
-            to: options.to,
-            subject: options.subject
-        });
         return data;
     } catch (error) {
         console.error('Error sending email:', {

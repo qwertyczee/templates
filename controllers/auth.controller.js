@@ -64,7 +64,6 @@ const sendMagicLink = async (req, res) => {
     await prisma.magicLink.create({
       data: {
         token,
-        email,
         expiresAt,
         userId: user.id,
       },
@@ -103,7 +102,7 @@ const verifyMagicLink = async (req, res) => {
   const { token } = req.body;
 
   try {
-    // Find the magic link
+    // Find the magic link with user
     const magicLink = await prisma.magicLink.findUnique({
       where: { token },
       include: { user: true },
@@ -113,29 +112,16 @@ const verifyMagicLink = async (req, res) => {
       return res.status(400).json({ error: 'Invalid magic link' });
     }
 
-    if (magicLink.used) {
-      return res.status(400).json({ error: 'Magic link already used' });
-    }
-
     if (new Date() > magicLink.expiresAt) {
+      // Delete expired token
+      await prisma.magicLink.deleteMany({ where: { id: magicLink.id } });
       return res.status(400).json({ error: 'Magic link expired' });
     }
 
-    // Mark as used
-    await prisma.magicLink.update({
-      where: { id: magicLink.id },
-      data: { used: true },
-    });
+    const user = magicLink.user;
 
-    // Get or create user
-    let user = magicLink.user;
-    if (!user) {
-      user = await prisma.user.upsert({
-        where: { email: magicLink.email },
-        update: {},
-        create: { email: magicLink.email },
-      });
-    }
+    // Delete the used magic link
+    await prisma.magicLink.deleteMany({ where: { id: magicLink.id } });
 
     createTokensAndSetCookies(res, user);
     res.json({ user: { id: user.id, email: user.email } });

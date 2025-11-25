@@ -18,13 +18,10 @@ model User {
 model MagicLink {
   id        String   @id @default(uuid())
   token     String   @unique
-  email     String
   expiresAt DateTime
-  used      Boolean  @default(false)
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@index([token])
-  @@index([email])
 }

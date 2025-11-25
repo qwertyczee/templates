@@ -1,5 +1,6 @@
 const { Resend } = require('resend');
-const { env } = require("../config/env")
+const { env } = require("../config/env");
+const { logger } = require('./logger');
 
 /**
  * Basic email sending utility using Resend
@@ -27,7 +28,7 @@ const sendEmail = async (options) => {
     });
     
     if (error) {
-        console.error('Error sending email with Resend:', error);
+        logger.error('Error sending email with Resend:', { error: error.message, stack: error.stack });
         throw new Error('Failed to send email');
     }
     

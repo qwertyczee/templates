@@ -4,6 +4,7 @@ const prisma = require('../config/db');
 const axios = require('axios');
 const { env } = require('../config/env');
 const { sendEmail } = require('../utils/email');
+const { logger } = require('../utils/logger');
 
 const ACCESS_TOKEN_EXPIRY = '60s';
 const REFRESH_TOKEN_EXPIRY = '7d';
@@ -92,7 +93,7 @@ const sendMagicLink = async (req, res) => {
 
     res.json({ message: 'Magic link sent to your email' });
   } catch (error) {
-    console.error('Send magic link error:', error);
+    logger.error('Send magic link error:', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to send magic link' });
   }
 };
@@ -126,7 +127,7 @@ const verifyMagicLink = async (req, res) => {
     createTokensAndSetCookies(res, user);
     res.json({ user: { id: user.id, email: user.email } });
   } catch (error) {
-    console.error('Verify magic link error:', error);
+    logger.error('Verify magic link error:', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to verify magic link' });
   }
 };
@@ -156,7 +157,7 @@ const refresh = async (req, res) => {
     
     res.json({ message: 'Refreshed' });
   } catch (error) {
-    console.error('Refresh error:', error);
+    logger.error('Refresh error:', { error: error.message, stack: error.stack });
     res.status(401).json({ error: 'Invalid refresh token' });
   }
 };
@@ -197,7 +198,7 @@ const googleCallback = async (req, res) => {
     createTokensAndSetCookies(res, user);
     res.redirect(env.frontendDashboardUrl);
   } catch (error) {
-    console.error('Google callback error:', error);
+    logger.error('Google callback error:', { error: error.message, stack: error.stack });
     res.redirect(`${env.frontendUrl}/login?error=google_auth_failed`);
   }
 };

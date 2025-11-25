@@ -216,58 +216,6 @@ const googleCallback = async (req, res) => {
   }
 };
 
-// GitHub Auth
-const githubAuth = (req, res) => {
-  const redirectUri = env.githubRedirectUri;
-  const url = `https://github.com/login/oauth/authorize?client_id=${env.githubClientId}&redirect_uri=${redirectUri}&scope=user:email`;
-  res.json({ url });
-};
-
-const githubCallback = async (req, res) => {
-  const { code } = req.query;
-
-  try {
-    const { data } = await axios.post('https://github.com/login/oauth/access_token', {
-      client_id: env.githubClientId,
-      client_secret: env.githubClientSecret,
-      code,
-    }, {
-      headers: { Accept: 'application/json' }
-    });
-
-    if (data.error) throw new Error(data.error_description);
-
-    const { data: profile } = await axios.get('https://api.github.com/user', {
-      headers: { Authorization: `Bearer ${data.access_token}` },
-    });
-
-    let email = profile.email;
-    if (!email) {
-      const { data: emails } = await axios.get('https://api.github.com/user/emails', {
-        headers: { Authorization: `Bearer ${data.access_token}` },
-      });
-      email = emails.find(e => e.primary && e.verified)?.email;
-    }
-
-    if (!email) throw new Error('No verified email found');
-
-    const user = await prisma.user.upsert({
-      where: { email },
-      update: { githubId: String(profile.id) },
-      create: {
-        email,
-        githubId: String(profile.id),
-      },
-    });
-
-    createTokensAndSetCookies(res, user);
-    res.redirect(env.frontendDashboardUrl);
-  } catch (error) {
-    console.error('GitHub callback error:', error);
-    res.redirect(`${env.frontendUrl}/login?error=github_auth_failed`);
-  }
-};
-
 const me = async (req, res) => {
   res.json({ user: req.user });
 };
@@ -284,8 +232,6 @@ module.exports = {
   refresh,
   googleAuth,
   googleCallback,
-  githubAuth,
-  githubCallback,
   me,
   logout,
 };

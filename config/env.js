@@ -15,11 +15,6 @@ const env = {
     googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
     googleRedirectUri: process.env.GOOGLE_REDIRECT_URI,
 
-    // GitHub OAuth
-    githubClientId: process.env.GITHUB_CLIENT_ID,
-    githubClientSecret: process.env.GITHUB_CLIENT_SECRET,
-    githubRedirectUri: process.env.GITHUB_REDIRECT_URI,
-
     // Frontend
     frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
     frontendDashboardUrl: process.env.FRONTEND_DASHBOARD_URL || "http://localhost:3000/dashboard",

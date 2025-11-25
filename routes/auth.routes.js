@@ -14,10 +14,6 @@ router.post('/refresh', authController.refresh);
 router.get('/google', authController.googleAuth);
 router.get('/google/callback', authController.googleCallback);
 
-// GitHub
-router.get('/github', authController.githubAuth);
-router.get('/github/callback', authController.githubCallback);
-
 // User & Session
 router.get('/me', authRequired, authController.me);
 router.post('/logout', authController.logout);

@@ -23,6 +23,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isLoggingOut = urlParams.get('logout') === 'true';
+
+    if (isLoggingOut) {
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
     const fetchUser = async () => {
       try {
         let response = await fetch(`${API_URL}/auth/me`, {
@@ -109,9 +120,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await fetch(`${API_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
       setUser(null);
-      window.location.href = '/login';
+      window.location.href = '/?logout=true';
     } catch (error) {
       console.error('Logout failed', error);
+      setUser(null);
+      window.location.href = '/?logout=true';
     }
   };
 

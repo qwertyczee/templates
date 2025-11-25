@@ -10,6 +10,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isProtectedRoute: boolean;
+  setIsProtectedRoute: (isProtected: boolean) => void;
   sendMagicLink: (email: string) => Promise<void>;
   verifyMagicLink: (token: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
@@ -20,7 +22,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [isProtectedRoute, setIsProtectedRoute] = useState(false);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -34,42 +37,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    const fetchUser = async () => {
-      try {
-        let response = await fetch(`${API_URL}/auth/me`, {
-          credentials: 'include',
-        });
-
-        if (response.status === 401) {
-          // Try refreshing
-          const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
-            method: 'POST',
+    if (isProtectedRoute) {
+      const fetchUser = async () => {
+        setLoading(true);
+        try {
+          let response = await fetch(`${API_URL}/auth/me`, {
             credentials: 'include',
           });
-          if (refreshResponse.ok) {
-            // Retry me
-            response = await fetch(`${API_URL}/auth/me`, {
+
+          if (response.status === 401) {
+            // Try refreshing
+            const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
+              method: 'POST',
               credentials: 'include',
             });
+            if (refreshResponse.ok) {
+              // Retry me
+              response = await fetch(`${API_URL}/auth/me`, {
+                credentials: 'include',
+              });
+            }
           }
-        }
 
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
-        } else {
+          if (response.ok) {
+            const data = await response.json();
+            setUser(data.user);
+          } else {
+            setUser(null);
+          }
+        } catch (error) {
+          console.error('Failed to fetch user', error);
           setUser(null);
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Failed to fetch user', error);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
-    fetchUser();
-  }, []);
+      fetchUser();
+    }
+  }, [isProtectedRoute]);
 
   const sendMagicLink = async (email: string) => {
     const response = await fetch(`${API_URL}/auth/magic-link`, {
@@ -129,7 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, sendMagicLink, verifyMagicLink, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, loading, isProtectedRoute, setIsProtectedRoute, sendMagicLink, verifyMagicLink, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

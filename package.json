@@ -5,11 +5,12 @@
     "scripts": {
         "dev": "nodemon --watch . index.js",
         "start": "node index.js",
+        "postinstall": "prisma generate",
         "db:update": "drizzle-kit push"
     },
     "dependencies": {
-        "@prisma/adapter-pg": "^7.0.0",
         "@prisma/client": "^7.0.0",
+        "@prisma/extension-accelerate": "^3.0.0",
         "axios": "^1.11.0",
         "bcryptjs": "^3.0.3",
         "cookie-parser": "^1.4.7",

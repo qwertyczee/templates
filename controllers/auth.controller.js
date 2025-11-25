@@ -1,8 +1,9 @@
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const prisma = require('../config/db');
 const axios = require('axios');
 const { env } = require('../config/env');
+const { sendEmail } = require('../utils/email');
 
 const ACCESS_TOKEN_EXPIRY = '60s';
 const REFRESH_TOKEN_EXPIRY = '7d';
@@ -35,58 +36,112 @@ const createTokensAndSetCookies = (res, user) => {
     secure: env.isProd,
     sameSite: 'lax',
     maxAge: REFRESH_TOKEN_COOKIE_MAX_AGE,
-    path: '/auth', // Only send refresh token to auth routes (specifically /refresh)
+    path: '/auth',
   });
 
   return { accessToken, refreshToken };
 };
 
-// Email/Password Register
-const register = async (req, res) => {
-  const { email, password } = req.body;
+// Send Magic Link
+const sendMagicLink = async (req, res) => {
+  const { email } = req.body;
 
   try {
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
+    // Generate a secure token
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + env.magicLinkExpiryMinutes * 60 * 1000);
+
+    // Find or create user
+    let user = await prisma.user.findUnique({ where: { email } });
+    
+    if (!user) {
+      user = await prisma.user.create({
+        data: { email },
+      });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({
+    // Create magic link record
+    await prisma.magicLink.create({
       data: {
+        token,
         email,
-        password: hashedPassword,
+        expiresAt,
+        userId: user.id,
       },
     });
 
-    createTokensAndSetCookies(res, user);
-    res.status(201).json({ user: { id: user.id, email: user.email } });
+    // Build magic link URL
+    const magicLinkUrl = `${env.frontendUrl}/auth/verify?token=${token}`;
+
+    // Send email
+    await sendEmail({
+      to: email,
+      subject: 'Your Magic Login Link',
+      text: `Click the following link to log in: ${magicLinkUrl}\n\nThis link expires in ${env.magicLinkExpiryMinutes} minutes.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Welcome!</h2>
+          <p>Click the button below to log in to your account:</p>
+          <a href="${magicLinkUrl}" style="display: inline-block; background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 16px 0;">
+            Log In
+          </a>
+          <p style="color: #666; font-size: 14px;">This link expires in ${env.magicLinkExpiryMinutes} minutes.</p>
+          <p style="color: #666; font-size: 14px;">If you didn't request this link, you can safely ignore this email.</p>
+        </div>
+      `,
+    });
+
+    res.json({ message: 'Magic link sent to your email' });
   } catch (error) {
-    console.error('Register error:', error);
-    res.status(500).json({ error: 'Registration failed' });
+    console.error('Send magic link error:', error);
+    res.status(500).json({ error: 'Failed to send magic link' });
   }
 };
 
-// Email/Password Login
-const login = async (req, res) => {
-  const { email, password } = req.body;
+// Verify Magic Link
+const verifyMagicLink = async (req, res) => {
+  const { token } = req.body;
 
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || !user.password) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    // Find the magic link
+    const magicLink = await prisma.magicLink.findUnique({
+      where: { token },
+      include: { user: true },
+    });
+
+    if (!magicLink) {
+      return res.status(400).json({ error: 'Invalid magic link' });
     }
 
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    if (magicLink.used) {
+      return res.status(400).json({ error: 'Magic link already used' });
+    }
+
+    if (new Date() > magicLink.expiresAt) {
+      return res.status(400).json({ error: 'Magic link expired' });
+    }
+
+    // Mark as used
+    await prisma.magicLink.update({
+      where: { id: magicLink.id },
+      data: { used: true },
+    });
+
+    // Get or create user
+    let user = magicLink.user;
+    if (!user) {
+      user = await prisma.user.upsert({
+        where: { email: magicLink.email },
+        update: {},
+        create: { email: magicLink.email },
+      });
     }
 
     createTokensAndSetCookies(res, user);
     res.json({ user: { id: user.id, email: user.email } });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Login failed' });
+    console.error('Verify magic link error:', error);
+    res.status(500).json({ error: 'Failed to verify magic link' });
   }
 };
 
@@ -154,7 +209,7 @@ const googleCallback = async (req, res) => {
     });
 
     createTokensAndSetCookies(res, user);
-    res.redirect(env.frontendUrl);
+    res.redirect(env.frontendDashboardUrl);
   } catch (error) {
     console.error('Google callback error:', error);
     res.redirect(`${env.frontendUrl}/login?error=google_auth_failed`);
@@ -206,7 +261,7 @@ const githubCallback = async (req, res) => {
     });
 
     createTokensAndSetCookies(res, user);
-    res.redirect(env.frontendUrl);
+    res.redirect(env.frontendDashboardUrl);
   } catch (error) {
     console.error('GitHub callback error:', error);
     res.redirect(`${env.frontendUrl}/login?error=github_auth_failed`);
@@ -224,8 +279,8 @@ const logout = (req, res) => {
 };
 
 module.exports = {
-  register,
-  login,
+  sendMagicLink,
+  verifyMagicLink,
   refresh,
   googleAuth,
   googleCallback,

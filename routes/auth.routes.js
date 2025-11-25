@@ -3,9 +3,11 @@ const router = express.Router();
 const authController = require('../controllers/auth.controller');
 const { authRequired } = require('../middlewares/auth.middleware');
 
-// Email/Password
-router.post('/register', authController.register);
-router.post('/login', authController.login);
+// Magic Link
+router.post('/magic-link', authController.sendMagicLink);
+router.post('/magic-link/verify', authController.verifyMagicLink);
+
+// Token Refresh
 router.post('/refresh', authController.refresh);
 
 // Google

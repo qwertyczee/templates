@@ -7,11 +7,25 @@ datasource db {
 }
 
 model User {
+  id         String      @id @default(uuid())
+  email      String      @unique
+  googleId   String?     @unique
+  githubId   String?     @unique
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  magicLinks MagicLink[]
+}
+
+model MagicLink {
   id        String   @id @default(uuid())
-  email     String   @unique
-  password  String?
-  googleId  String?  @unique
-  githubId  String?  @unique
+  token     String   @unique
+  email     String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  @@index([token])
+  @@index([email])
 }
